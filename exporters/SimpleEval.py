@@ -1,5 +1,3 @@
-#!/usr/bin/env python2.7
-
 """
 A simple C expressions evaluator.
 Copyright (c) 2018, Joxean Koret
@@ -38,22 +36,14 @@ from __future__ import print_function
 import re
 import math
 import shlex
-import string
 
 from decimal import Decimal
 
-try:
-  long        # Python 2
-except NameError:
-  long = int  # Python 3
+long = int  # Python 3
 
-try:
-  raw_input          # Python 2
-except NameError:
-  raw_input = input  # Python 3
+raw_input = input  # Python 3
 
-
-#-------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 __version__ = '1.0'
 __all__ = [
   'UnsupportedToken',
@@ -63,15 +53,16 @@ __all__ = [
   'simple_eval',
 ]
 
-#-------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 # Constants
 OPERATORS = ["-", "+", "/", "*", "<", ">", "|", "&"]
 
 TOKEN_TYPE_NUM = 0
-TOKEN_TYPE_OP  = 1
+TOKEN_TYPE_OP = 1
 TOKEN_TYPE_VAR = 2
 
-#-------------------------------------------------------------------------------
+
+# -------------------------------------------------------------------------------
 def is_number(token):
   ret = False
   nums = re.findall("\d*\.\d+|\d+", token)
@@ -84,19 +75,23 @@ def is_number(token):
 
   return ret
 
-#-------------------------------------------------------------------------------
+
+# -------------------------------------------------------------------------------
 class UnsupportedToken(Exception):
   pass
 
-#-------------------------------------------------------------------------------
+
+# -------------------------------------------------------------------------------
 class UnsupportedOperation(Exception):
   pass
 
-#-------------------------------------------------------------------------------
+
+# -------------------------------------------------------------------------------
 class InvalidSyntax(Exception):
   pass
 
-#-------------------------------------------------------------------------------
+
+# -------------------------------------------------------------------------------
 class SimpleEval:
   """ A simple C expressions evaluator.
   
@@ -167,7 +162,7 @@ class SimpleEval:
     """ Add the constants 'pi' and 'e'.
     
     Add the aforementioned constants so they are available for expressions."""
-    symbols = {"pi":math.pi, "e":math.e}
+    symbols = {"pi": math.pi, "e": math.e}
     for symbol in symbols:
       if symbol not in names:
         names[symbol] = Decimal(symbols[symbol])
@@ -193,7 +188,7 @@ class SimpleEval:
 
     return Decimal(token)
 
-  def eval(self, expr, names = {}):
+  def eval(self, expr, names={}):
     """ Evaluate the given expression and return the calculated value.
     
     Evaluate the expression 'expr', optionally using variable names from 'names'
@@ -245,25 +240,26 @@ class SimpleEval:
         op += token
         if op not in ["<<", ">>", "**"]:
           self.invalid_token(op)
-    
+
     if op is not None:
       self.invalid_syntax()
 
     return result
 
-#-------------------------------------------------------------------------------
-def simple_eval(expr, names = {}):
+
+# -------------------------------------------------------------------------------
+def simple_eval(expr, names={}):
   """ Evaluate the given expression and return the calculated value.
     
   Evaluate the expression 'expr', optionally using variable names from 'names'
   in the expression, and return the calculated value. """
-  
+
   evaluator = SimpleEval()
-  return evaluator.eval(expr, names = names)
+  return evaluator.eval(expr, names=names)
 
-#-------------------------------------------------------------------------------
+
+# -------------------------------------------------------------------------------
 def main():
-
   try:
     import readline
   except:
@@ -283,6 +279,7 @@ def main():
       continue
 
     print(evaluator.eval(cmd))
+
 
 if __name__ == "__main__":
   main()

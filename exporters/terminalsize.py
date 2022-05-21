@@ -7,8 +7,9 @@ import shlex
 import struct
 import platform
 import subprocess
- 
-#------------------------------------------------------------------------------- 
+
+
+# -------------------------------------------------------------------------------
 def get_terminal_size():
   """ getTerminalSize()
    - get width and height of console
@@ -27,10 +28,11 @@ def get_terminal_size():
     tuple_xy = _get_terminal_size_linux()
   if tuple_xy is None:
     print("default")
-    tuple_xy = (80, 25)    # default value
+    tuple_xy = (80, 25)  # default value
   return tuple_xy
 
-#------------------------------------------------------------------------------- 
+
+# -------------------------------------------------------------------------------
 def _get_terminal_size_windows():
   try:
     from ctypes import windll, create_string_buffer
@@ -49,8 +51,9 @@ def _get_terminal_size_windows():
       return sizex, sizey
   except:
     pass
- 
-#-------------------------------------------------------------------------------
+
+
+# -------------------------------------------------------------------------------
 def _get_terminal_size_tput():
   # get terminal width
   # src: http://stackoverflow.com/questions/263890/how-do-i-find-the-width-height-of-a-terminal-window
@@ -60,18 +63,20 @@ def _get_terminal_size_tput():
     return (cols, rows)
   except:
     pass
- 
-#-------------------------------------------------------------------------------
+
+
+# -------------------------------------------------------------------------------
 def _get_terminal_size_linux():
   def ioctl_GWINSZ(fd):
     try:
       import fcntl
       import termios
       cr = struct.unpack('hh',
-                 fcntl.ioctl(fd, termios.TIOCGWINSZ, '1234'))
+                         fcntl.ioctl(fd, termios.TIOCGWINSZ, '1234'))
       return cr
     except:
       pass
+
   cr = ioctl_GWINSZ(0) or ioctl_GWINSZ(1) or ioctl_GWINSZ(2)
   if not cr:
     try:
@@ -86,7 +91,8 @@ def _get_terminal_size_linux():
     except:
       return None
   return int(cr[1]), int(cr[0])
- 
+
+
 if __name__ == "__main__":
   sizex, sizey = get_terminal_size()
   print('width =', sizex, 'height =', sizey)

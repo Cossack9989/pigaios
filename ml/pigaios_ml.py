@@ -1,5 +1,3 @@
-#!/usr/bin/env python2.7
-
 """
 A machine learning based system for calculating matches ratios. Part of the
 Pigaios Project.
@@ -20,19 +18,21 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from __future__ import print_function
 
-#-------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 # Dear SciKit and NumPy developers: fuck you.
 #
 def warn(*args, **kwargs):
   pass
+
+
 import warnings
+
 warnings.warn = warn
 warnings.filterwarnings("ignore")
 #
 # End of code to disable the annonyance of importing numpy and/or SciKit
-#-------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 
 import os
 import sys
@@ -42,7 +42,9 @@ import math
 import random
 import sklearn
 import threading
+import joblib
 import numpy as np
+
 np.warnings.filterwarnings('ignore')
 
 from sklearn import tree
@@ -51,15 +53,14 @@ from sklearn import neighbors
 from sklearn import naive_bayes
 from sklearn import linear_model
 from sklearn import neural_network
-from sklearn.externals import joblib
 from sklearn.model_selection import cross_val_score
 from sklearn.utils.validation import check_is_fitted
 
-#-------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 SK_MAJOR = int(sklearn.__version__.split(".")[0])
 SK_MINOR = int(sklearn.__version__.split(".")[1])
 
-#-------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 # All the known working classifiers are listed here. All the classifiers but one
 # increase the number of true positives. The Bayesian Ridge doesn't increase the
 # number of true positives but reduces the false positives ratio a 0.0048%. Not
@@ -67,13 +68,15 @@ SK_MINOR = int(sklearn.__version__.split(".")[1])
 #
 ML_CLASSIFIERS = [
   (tree.DecisionTreeClassifier, "Decision Tree Classifier", []),
-  ]
+]
 
-#-------------------------------------------------------------------------------
+
+# -------------------------------------------------------------------------------
 def log(msg):
   print("[%s] %s" % (time.asctime(), msg))
 
-#-------------------------------------------------------------------------------
+
+# -------------------------------------------------------------------------------
 # The original VotingClassifier class uses np.bincount() with an array and
 # annoyingly it will fail with a message like "cannot cast float64 to int64".
 #
@@ -107,7 +110,8 @@ class CPigaiosVotingClassifier(ensemble.VotingClassifier):
     maj = self.le_.inverse_transform(maj)
     return maj
 
-#-------------------------------------------------------------------------------
+
+# -------------------------------------------------------------------------------
 class CPigaiosMultiClassifier(object):
   def __init__(self, random_state=None):
     self.clfs = {}
@@ -158,7 +162,8 @@ class CPigaiosMultiClassifier(object):
       ret.append(clf.predict_proba(input_val)[0][1])
     return sum(ret) / len(ret)
 
-#-------------------------------------------------------------------------------
+
+# -------------------------------------------------------------------------------
 class CPigaiosClassifier:
   def __init__(self):
     self.X = []
@@ -212,9 +217,8 @@ class CPigaiosClassifier:
         ones_bad += 1
 
     line = "Correctly predicted %d out of %d (false negatives %d -> %f%%, false positives %d -> %f%%)"
-    log(line % (ones, ones + ones_bad, ones_bad, \
-       (ones_bad * 100. / (ones + ones_bad)), zeros_bad, \
-       ((zeros_bad * 100. / (zeros + zeros_bad)))))
+    log(line % (ones, ones + ones_bad, ones_bad, (ones_bad * 100. / (ones + ones_bad)), zeros_bad,
+                ((zeros_bad * 100. / (zeros + zeros_bad)))))
     log("Total right matches %d -> %f%%" % (total_matches, (total_matches * 100. / len(X))))
 
   def load_model(self):
@@ -276,12 +280,12 @@ class CPigaiosClassifier:
       log("Loading model...")
       self.clf = joblib.load("clf.pkl")
 
-    dot_data = tree.export_graphviz(self.clf, out_file="pigaios.dot", \
-                                    filled=True, rounded=True, \
+    dot_data = tree.export_graphviz(self.clf, out_file="pigaios.dot", filled=True, rounded=True,
                                     special_characters=True)
     os.system("dot -Tx11 pigaios.dot")
 
-#-------------------------------------------------------------------------------
+
+# -------------------------------------------------------------------------------
 def usage():
   print("Usage: %s [options]" % sys.argv[0])
   print()
@@ -304,7 +308,8 @@ def usage():
   print("--criterion-entropy      Set the classifier criterion to entropy.")
   print()
 
-#-------------------------------------------------------------------------------
+
+# -------------------------------------------------------------------------------
 def main(args):
   random.seed(1)
   pdt = CPigaiosClassifier()
@@ -382,6 +387,7 @@ def main(args):
       pdt.criterion = "entropy"
     else:
       usage()
+
 
 if __name__ == "__main__":
   if len(sys.argv) == 1:

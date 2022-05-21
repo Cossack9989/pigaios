@@ -1,5 +1,3 @@
-#!/usr/bin/env python2.7
-
 """
 Core functions and classes for matching functions in source codes and binaries.
 Copyright (c) 2018, Joxean Koret
@@ -18,8 +16,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from __future__ import print_function
-
 import os
 import sys
 import json
@@ -28,63 +24,61 @@ import difflib
 import sqlite3
 
 from others.py3compat import INTEGER_TYPES
-
-try:
-  reload           # Python 2
-except NameError:  # Python 3
-  from importlib import reload
+from importlib import reload
 
 try:
   from sourcexp_ida import log
+
   from_ida = True
 except ImportError:
   from_ida = False
   log = None
 
-try:
-  import numpy as np
+# try:
+import numpy as np
 
-  from ml import pigaios_ml
-  reload(pigaios_ml)
+from ml import pigaios_ml
 
-  from ml.pigaios_ml import CPigaiosClassifier, CPigaiosMultiClassifier
-  has_ml = True
-except ImportError:
-  has_ml = False
+reload(pigaios_ml)
 
-try:
-  long        # Python 2
-except NameError:
-  long = int  # Python 3
+from ml.pigaios_ml import CPigaiosClassifier, CPigaiosMultiClassifier
 
-#-----------------------------------------------------------------------
+has_ml = True
+# except ImportError:
+#   has_ml = False
+
+long = int  # Python 3
+
+
+# -----------------------------------------------------------------------
 def sourceimp_log(msg):
   print("[%s] %s" % (time.asctime(), msg))
+
 
 # Horrible workaround...
 if not from_ida:
   log = sourceimp_log
 
-#-------------------------------------------------------------------------------
-_DEBUG=False
+# -------------------------------------------------------------------------------
+_DEBUG = False
 
-#-------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 COMPARE_FIELDS = ["name", "conditions", "constants_json", "loops", "switchs",
                   "switchs_json", "calls", "externals", "recursive", "globals",
                   "callees_json"]
 
 ML_FIELDS_ORDER = ['bin_calls', 'bin_conditions', 'bin_externals',
-  'bin_globals', 'bin_loops', 'bin_recursive', 'bin_switchs',
-  'callees_json_bin_total', 'callees_json_matched', 'callees_json_non_matched',
-  'callees_json_src_total', 'calls_diff', 'conditions_diff',
-  'constants_json_bin_total', 'constants_json_matched',
-  'constants_json_non_matched', 'constants_json_src_total', 'externals_diff',
-  'globals_diff', 'heuristic', 'loops_diff', 'recursive_diff', 'src_calls',
-  'src_conditions', 'src_externals', 'src_globals', 'src_loops',
-  'src_recursive', 'src_switchs', 'switchs_diff', 'switchs_json',
-  'guessed_name', 'name_in_guesses', 'name_maybe_in_guesses']
+                   'bin_globals', 'bin_loops', 'bin_recursive', 'bin_switchs',
+                   'callees_json_bin_total', 'callees_json_matched', 'callees_json_non_matched',
+                   'callees_json_src_total', 'calls_diff', 'conditions_diff',
+                   'constants_json_bin_total', 'constants_json_matched',
+                   'constants_json_non_matched', 'constants_json_src_total', 'externals_diff',
+                   'globals_diff', 'heuristic', 'loops_diff', 'recursive_diff', 'src_calls',
+                   'src_conditions', 'src_externals', 'src_globals', 'src_loops',
+                   'src_recursive', 'src_switchs', 'switchs_diff', 'switchs_json',
+                   'guessed_name', 'name_in_guesses', 'name_maybe_in_guesses']
 
-#-------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 ATTRIBUTES_MATCHING = 0
 SAME_RARE_CONSTANT = 1
 NEARBY_FUNCTION = 2
@@ -95,26 +89,27 @@ SAME_GUESSED_FUNCTION = 6
 
 # All heuristics are equal, but some are more equal than others.
 HEURISTICS = {
-  ATTRIBUTES_MATCHING     : 1.0,
-  SAME_RARE_CONSTANT      : 1.0,
-  SAME_SOURCE_FILE        : 1.0,
-  SAME_GUESSED_FUNCTION   : 1.0,
-  NEARBY_FUNCTION         : 0.8,
-  CALLGRAPH_MATCH         : 0.7,
-  SPECIFIC_CALLEE_SEARCH  : 0.7,
+  ATTRIBUTES_MATCHING: 1.0,
+  SAME_RARE_CONSTANT: 1.0,
+  SAME_SOURCE_FILE: 1.0,
+  SAME_GUESSED_FUNCTION: 1.0,
+  NEARBY_FUNCTION: 0.8,
+  CALLGRAPH_MATCH: 0.7,
+  SPECIFIC_CALLEE_SEARCH: 0.7,
 }
 
 ML_HEURISTICS = {
-  ATTRIBUTES_MATCHING     :1.,
-  SAME_RARE_CONSTANT      :2.,
-  SAME_SOURCE_FILE        :2.,
-  SAME_GUESSED_FUNCTION   :2.,
-  NEARBY_FUNCTION         :4.,
-  CALLGRAPH_MATCH         :9,
-  SPECIFIC_CALLEE_SEARCH  :5.
+  ATTRIBUTES_MATCHING: 1.,
+  SAME_RARE_CONSTANT: 2.,
+  SAME_SOURCE_FILE: 2.,
+  SAME_GUESSED_FUNCTION: 2.,
+  NEARBY_FUNCTION: 4.,
+  CALLGRAPH_MATCH: 9,
+  SPECIFIC_CALLEE_SEARCH: 5.
 }
 
-#-------------------------------------------------------------------------------
+
+# -------------------------------------------------------------------------------
 def quick_ratio(buf1, buf2):
   try:
     if buf1 is None or buf2 is None:
@@ -125,21 +120,26 @@ def quick_ratio(buf1, buf2):
     print("quick_ratio:", str(sys.exc_info()[1]))
     return 0
 
-#-------------------------------------------------------------------------------
+
+# -------------------------------------------------------------------------------
 def seems_false_positive(src_name, bin_name):
   bin_name = bin_name.strip("_").strip(".")
   if bin_name.startswith("sub_") or bin_name.startswith("j_") or \
-     bin_name.startswith("unknown") or bin_name.startswith("nullsub_"):
+    bin_name.startswith("unknown") or bin_name.startswith("nullsub_"):
     return False
 
   return bin_name.find(src_name) == -1
 
-#-------------------------------------------------------------------------------
-def json_loads(line):
-  return json.loads(line.decode("utf-8","ignore"))
 
-#-------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
+def json_loads(line):
+  return json.loads(line.decode("utf-8", "ignore"))
+
+
+# -------------------------------------------------------------------------------
 PROFILING = os.getenv("DIAPHORA_PROFILE") is not None
+
+
 def cur_execute(cur, sql, args):
   if PROFILING:
     t = time.time()
@@ -151,7 +151,8 @@ def cur_execute(cur, sql, args):
     if t > 0.5:
       print("Running query %s took %f second(s)" % (repr(sql), t))
 
-#-------------------------------------------------------------------------------
+
+# -------------------------------------------------------------------------------
 class CBinaryToSourceImporter:
   def __init__(self, db_path):
     self.debug = False
@@ -168,7 +169,7 @@ class CBinaryToSourceImporter:
     self.pseudo = {}
     self.best_matches = {}
     self.dubious_matches = {}
-    
+
     self.source_names_cache = {}
     self.source_callees_cache = {}
     self.binary_callees_cache = {}
@@ -241,11 +242,11 @@ class CBinaryToSourceImporter:
         s1 = set(src_json)
         s2 = set(bin_json)
         non_matched = s2.difference(s1).union(s1.difference(s2))
-        matched     = s1.intersection(s2)
+        matched = s1.intersection(s2)
 
-        ret["%s_src_total" % field]   = src_total
-        ret["%s_bin_total" % field]   = bin_total
-        ret["%s_matched" % field]     = len(matched)
+        ret["%s_src_total" % field] = src_total
+        ret["%s_bin_total" % field] = bin_total
+        ret["%s_matched" % field] = len(matched)
         ret["%s_non_matched" % field] = len(non_matched)
       else:
         raise Exception("Unknow data type for field %s" % field)
@@ -380,7 +381,7 @@ class CBinaryToSourceImporter:
           s1 = set(src_json)
           s2 = set(bin_json)
           subset = s1.intersection(s2)
-          
+
           if len(subset) > 0:
             l = []
             for tmp in list(subset):
@@ -432,8 +433,10 @@ class CBinaryToSourceImporter:
 
                   # Add a match for every single pair, we will remove the bad
                   # ones later on at choose_best_matches().
-                  sub_ratio, sub_reasons, sub_ml, sub_qr = self.compare_functions(sub_src_id, sub_bin_id, SPECIFIC_CALLEE_SEARCH)
-                  self.add_match(sub_src_id, sub_bin_ea, str(src_key), "Specific callee search", sub_ratio, sub_reasons, sub_ml, sub_qr)
+                  sub_ratio, sub_reasons, sub_ml, sub_qr = self.compare_functions(sub_src_id, sub_bin_id,
+                                                                                  SPECIFIC_CALLEE_SEARCH)
+                  self.add_match(sub_src_id, sub_bin_ea, str(src_key), "Specific callee search", sub_ratio, sub_reasons,
+                                 sub_ml, sub_qr)
                   if sub_ratio == 1.0 or sub_ml == 1.0:
                     # If we found a perfect match finding callees, chances are
                     # that this match is good.
@@ -640,7 +643,7 @@ class CBinaryToSourceImporter:
     id = None
     ea = None
     sql = "select id, ea from functions where %s = ?" % field
-    cur_execute(cur, sql, (value, ))
+    cur_execute(cur, sql, (value,))
     row = cur.fetchone()
     if row is not None:
       id = row["id"]
@@ -658,7 +661,7 @@ class CBinaryToSourceImporter:
                from functions
               where ea = ?
                 and conditions + constants + loops + switchs + calls + externals > 1"""
-    cur_execute(cur, sql, (ea, ))
+    cur_execute(cur, sql, (ea,))
     row = cur.fetchone()
     if row is not None:
       func_id = row["id"]
@@ -673,7 +676,7 @@ class CBinaryToSourceImporter:
     cur = self.db.cursor()
     func_name = None
     sql = "select name from src.functions where id = ?"
-    cur_execute(cur, sql, (id, ))
+    cur_execute(cur, sql, (id,))
     row = cur.fetchone()
     if row is not None:
       func_name = row["name"]
@@ -685,7 +688,7 @@ class CBinaryToSourceImporter:
     l = []
     cur = self.db.cursor()
     sql = "select id from src.functions where %s = ?" % field
-    cur_execute(cur, sql, (value, ))
+    cur_execute(cur, sql, (value,))
     for row in cur.fetchall():
       l.append(row["id"])
     cur.close()
@@ -695,7 +698,7 @@ class CBinaryToSourceImporter:
     cur = self.db.cursor()
     val = None
     sql = "select %s from src.functions where id = ?" % field
-    cur_execute(cur, sql, (id, ))
+    cur_execute(cur, sql, (id,))
     row = cur.fetchone()
     if row is not None:
       val = row[field]
@@ -708,7 +711,7 @@ class CBinaryToSourceImporter:
 
     cur = self.db.cursor()
     sql = "select callee from src.callgraph where caller = ?"
-    cur_execute(cur, sql, (src_id, ))
+    cur_execute(cur, sql, (src_id,))
     src_rows = cur.fetchall()
     cur.close()
     self.source_callees_cache[src_id] = src_rows
@@ -720,7 +723,7 @@ class CBinaryToSourceImporter:
 
     cur = self.db.cursor()
     sql = "select callee from callgraph where caller = ?"
-    cur_execute(cur, sql, (str(bin_id), ))
+    cur_execute(cur, sql, (str(bin_id),))
     bin_rows = cur.fetchall()
     cur.close()
     self.binary_callees_cache[bin_id] = bin_rows
@@ -732,7 +735,7 @@ class CBinaryToSourceImporter:
 
     cur = self.db.cursor()
     sql = "select caller from src.callgraph where callee = ?"
-    cur_execute(cur, sql, (src_id, ))
+    cur_execute(cur, sql, (src_id,))
     src_rows = cur.fetchall()
     cur.close()
     self.source_callers_cache[src_id] = src_rows
@@ -744,7 +747,7 @@ class CBinaryToSourceImporter:
 
     cur = self.db.cursor()
     sql = "select caller from callgraph where callee = ?"
-    cur_execute(cur, sql, (str(bin_id), ))
+    cur_execute(cur, sql, (str(bin_id),))
     bin_rows = cur.fetchall()
     cur.close()
     self.binary_callers_cache[bin_id] = bin_rows
@@ -763,7 +766,7 @@ class CBinaryToSourceImporter:
   def find_one_callgraph_match(self, src_id, bin_ea, min_level, call_type="callee", iteration=1):
     cur = self.db.cursor()
     sql = "select * from functions where ea = ?"
-    cur_execute(cur, sql, (str(bin_ea), ))
+    cur_execute(cur, sql, (str(bin_ea),))
     row = cur.fetchone()
     if row is not None:
       src_rows = list(self.get_source_call_type(src_id, call_type))
@@ -774,7 +777,8 @@ class CBinaryToSourceImporter:
             msg = "Cartesian product finding %ss for SRC=%d/BIN=0x%08x(%s) too big (%d)..."
             log(msg % (call_type, src_id, long(bin_ea), row["name"], len(bin_rows) * len(src_rows)))
           elif len(bin_rows) > 0:
-            if _DEBUG: print("Finding matches in a cartesian product of %d x %d row(s)" % (len(src_rows), len(bin_rows)))
+            if _DEBUG: print(
+              "Finding matches in a cartesian product of %d x %d row(s)" % (len(src_rows), len(bin_rows)))
             for src_row in src_rows:
               for bin_row in bin_rows:
                 curr_bin_id = self.get_binary_func_id(bin_row[call_type])
@@ -795,7 +799,7 @@ class CBinaryToSourceImporter:
     if score >= min_level:
       cur = self.db.cursor()
       sql = "select id from functions where ea = ?"
-      cur_execute(cur, sql, (str(ea), ))
+      cur_execute(cur, sql, (str(ea),))
       row = cur.fetchone()
       if row is not None:
         bin_id = long(row["id"])
@@ -825,7 +829,7 @@ class CBinaryToSourceImporter:
             new_func_ea = bin_row[2]
             new_func_name = src_row[2]
             heur = "Nearby Function (Iteration %d)" % iteration
-            assert(new_func_ea is not None)
+            assert (new_func_ea is not None)
             self.add_match(new_match_id, new_func_ea, new_func_name, heur, score, reasons, ml, qr)
 
             if i < 0:
@@ -862,7 +866,7 @@ class CBinaryToSourceImporter:
           ea_dones.add(ea)
 
           if i == 1 or score >= self.min_level or ml == 1.0:
-            self.find_nearby_functions(match_id, ea, self.min_level + ((i-1)*0.1), i)
+            self.find_nearby_functions(match_id, ea, self.min_level + ((i - 1) * 0.1), i)
             self.find_one_callgraph_match(match_id, ea, self.min_level, "callee", i)
             self.find_one_callgraph_match(match_id, ea, self.min_level, "caller", i)
 
@@ -875,7 +879,7 @@ class CBinaryToSourceImporter:
       if len(self.best_matches) == total:
         break
 
-  def choose_best_matches(self, is_final = False):
+  def choose_best_matches(self, is_final=False):
     bin_d = {}
     src_d = {}
 

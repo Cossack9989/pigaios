@@ -10,10 +10,7 @@ import time
 import sqlite3
 import numpy as np
 
-try:
-  long        # Python 2
-except NameError:
-  long = int  # Python 3
+long = int  # Python 3
 
 
 #-------------------------------------------------------------------------------

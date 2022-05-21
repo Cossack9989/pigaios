@@ -1,5 +1,3 @@
-#!/usr/bin/env python2.7
-
 """
 Simple C macro parser. Part of the Pigaios project.
 Copyright (c) 2018, Joxean Koret
@@ -27,24 +25,22 @@ import decimal
 from SimpleEval import SimpleEval
 from kfuzzy import CKoretFuzzyHashing
 
-try:
-  long        # Python 2
-except NameError:
-  long = int  # Python 3
+long = int  # Python 3
 
-#-------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 MACROS_REGEXP = '\W*#\W*define\W+([a-z0-9_]+)\W+([a-z0-9_]+)'
 DEFAULT_ENUM = ""
 
-#-------------------------------------------------------------------------------
+
+# -------------------------------------------------------------------------------
 class CMacroExtractor:
   def __init__(self):
     self.filename = None
 
   def get_file_suffix(self, filename):
     _, tail = os.path.split(filename)
-    tail = tail.replace(".","_")
-    return "".join([c for c in tail if c.isalpha() or c.isdigit() or c=='_']).rstrip()
+    tail = tail.replace(".", "_")
+    return "".join([c for c in tail if c.isalpha() or c.isdigit() or c == '_']).rstrip()
 
   def get_enum_name(self, l):
     last_group = 0
@@ -54,7 +50,7 @@ class CMacroExtractor:
         s.add(key[:i])
 
       if last_group > 0 and len(s) > last_group:
-        new_name = key[:i-1]
+        new_name = key[:i - 1]
         new_name = new_name.upper()
         new_name = new_name.strip("_")
         return "%s_%s" % (new_name, self.get_file_suffix(self.filename).upper())
@@ -126,11 +122,13 @@ class CMacroExtractor:
     ret = self.create_enums(ret)
     return ret
 
-#-------------------------------------------------------------------------------
+
+# -------------------------------------------------------------------------------
 def usage():
   print("Usage: %s <source file>" % sys.argv[0])
 
-#-------------------------------------------------------------------------------
+
+# -------------------------------------------------------------------------------
 def main(filename):
   extractor = CMacroExtractor()
   enums = extractor.extract(filename)
@@ -138,6 +136,7 @@ def main(filename):
     src = enums[name]
     print(src)
     print()
+
 
 if __name__ == "__main__":
   if len(sys.argv) == 1:

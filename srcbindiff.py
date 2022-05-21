@@ -1,5 +1,3 @@
-#!/usr/bin/env python2.7
-
 """
 Pigaios, a tool for matching and diffing source codes directly against binaries.
 Copyright (c) 2018, Joxean Koret
@@ -18,12 +16,10 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from __future__ import print_function
-
 import os
 import sys
-import popen2
-import ConfigParser
+from pwn import *
+import configparser
 
 from exporters.base_support import is_source_file, is_header_file
 
@@ -40,28 +36,28 @@ try:
 except ImportError:
   has_clang = False
 
-#-------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 SBD_BANNER = """Source To Binary Differ command line tool version 0.0.1
 Copyright (c) 2018, Joxean Koret"""
-SBD_PROJECT_COMMENT = "# Default Source-Binary-Differ project configuration"
+SBD_PROJECT_COMMENT = b"# Default Source-Binary-Differ project configuration"
 DEFAULT_PROJECT_FILE = "sbd.project"
 
-#-------------------------------------------------------------------------------
+
+# -------------------------------------------------------------------------------
 class CSBDProject:
   def __init__(self):
     self.analyze_headers = False
 
   def resolve_clang_includes(self):
-    cmd = "clang -print-file-name=include"
-    rfd, wfd = popen2.popen2(cmd)
-    return rfd.read().strip("\n")
+    io = process(["clang", "-print-file-name=include"])
+    return io.recv().strip(b"\n")
 
   def create_project(self, path, project_file):
     if os.path.exists(project_file):
       print("Project file %s already exists." % repr(project_file))
       return False
 
-    config = ConfigParser.RawConfigParser()
+    config = configparser.RawConfigParser()
     config.optionxform = str
 
     # Add the CLang specific configuration section
@@ -97,16 +93,17 @@ class CSBDProject:
           config.set(section, filename, "1")
 
     with open(project_file, "wb") as configfile:
-      configfile.write("#"*len(SBD_PROJECT_COMMENT) + "\n")
-      configfile.write(SBD_PROJECT_COMMENT + "\n")
-      configfile.write("#"*len(SBD_PROJECT_COMMENT) + "\n")
+      configfile.write(b"#" * len(SBD_PROJECT_COMMENT) + b"\n")
+      configfile.write(SBD_PROJECT_COMMENT + b"\n")
+      configfile.write(b"#" * len(SBD_PROJECT_COMMENT) + b"\n")
       config.write(configfile)
 
     return True
 
-#-------------------------------------------------------------------------------
+
+# -------------------------------------------------------------------------------
 class CSBDExporter:
-  def __init__(self, cfg_file, parallel = False):
+  def __init__(self, cfg_file, parallel=False):
     self.cfg_file = cfg_file
     self.parallel = parallel
 
@@ -130,7 +127,8 @@ class CSBDExporter:
       msg = "\n%d warning(s), %d error(s), %d fatal error(s)"
       print(msg % (exporter.warnings, exporter.errors, exporter.fatals))
 
-#-------------------------------------------------------------------------------
+
+# -------------------------------------------------------------------------------
 def usage():
   if has_colorama:
     with colorama_text():
@@ -154,7 +152,8 @@ def usage():
   print("-help              Show this help.")
   print()
 
-#-------------------------------------------------------------------------------
+
+# -------------------------------------------------------------------------------
 def main():
   use_clang = True
   project_file = DEFAULT_PROJECT_FILE
@@ -196,6 +195,7 @@ def main():
       usage()
     else:
       print("Unsupported command line argument %s" % repr(arg))
+
 
 if __name__ == "__main__":
   if len(sys.argv) == 1:

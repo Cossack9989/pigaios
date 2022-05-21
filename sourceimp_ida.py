@@ -43,30 +43,30 @@ from idaapi import (Choose2, PluginForm, Form, init_hexrays_plugin, load_plugin,
 
 import sourceimp_core
 
-try:
-  reload           # Python 2
-except NameError:  # Python 3
-  from importlib import reload
+from importlib import reload
 
 reload(sourceimp_core)
 
 from sourceimp_core import *
 
 import sourcexp_ida
+
 reload(sourcexp_ida)
 
 from sourcexp_ida import log, CBinaryToSourceExporter, VERSION_VALUE
 
-#-------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 _DEBUG = False
 LITTLE_ORANGE = 0x026AFD
 
-#-------------------------------------------------------------------------------
+
+# -------------------------------------------------------------------------------
 def log(msg):
   Message("[%s] %s\n" % (time.asctime(), msg))
   replace_wait_box(msg)
 
-#-------------------------------------------------------------------------------
+
+# -------------------------------------------------------------------------------
 def indent_source(src):
   global indent_cmd
 
@@ -81,21 +81,24 @@ def indent_source(src):
     log("Error indenting: %s" % (str(sys.exc_info()[1])))
     return src.replace("<", "&lt;").replace(">", "&gt;")
 
-#-----------------------------------------------------------------------
+
+# -----------------------------------------------------------------------
 def is_ida_func(bin_name):
   if bin_name.startswith("sub_") or bin_name.startswith("j_") or \
-     bin_name.startswith("unknown") or bin_name.startswith("nullsub_"):
+    bin_name.startswith("unknown") or bin_name.startswith("nullsub_"):
     return True
   return False
 
-#-----------------------------------------------------------------------
+
+# -----------------------------------------------------------------------
 def get_decompiler_plugin():
   decompiler_plugin = os.getenv("DIAPHORA_DECOMPILER_PLUGIN")
   if decompiler_plugin is None:
     decompiler_plugin = "hexrays"
   return decompiler_plugin
 
-#-----------------------------------------------------------------------
+
+# -----------------------------------------------------------------------
 class CSrcDiffDialog(Form):
   def __init__(self):
     s = r"""Pigaios
@@ -111,15 +114,16 @@ class CSrcDiffDialog(Form):
   Project Specific Rules
   <#Select the project specific Python script rules #Python script      :{iProjectSpecificRules}>
   """
-    args = {'iFileOpen'             : Form.FileInput(open=True, swidth=45),
-            'iProjectSpecificRules' : Form.FileInput(open=True, swidth=45),
-            'iIndentCommand'        : Form.StringInput(swidth=45),
-            'iMinLevel'             : Form.StringInput(swidth=10),
-            'iMinDisplayLevel'      : Form.StringInput(swidth=10),
-            'cGroup1'  : Form.ChkGroupControl(("rUseDecompiler",)),}
+    args = {'iFileOpen': Form.FileInput(open=True, swidth=45),
+            'iProjectSpecificRules': Form.FileInput(open=True, swidth=45),
+            'iIndentCommand': Form.StringInput(swidth=45),
+            'iMinLevel': Form.StringInput(swidth=10),
+            'iMinDisplayLevel': Form.StringInput(swidth=10),
+            'cGroup1': Form.ChkGroupControl(("rUseDecompiler",)), }
     Form.__init__(self, s, args)
 
-#-------------------------------------------------------------------------------
+
+# -------------------------------------------------------------------------------
 class CHtmlViewer(PluginForm):
   def OnCreate(self, form):
     self.parent = self.FormToPyQtWidget(form)
@@ -143,7 +147,8 @@ class CHtmlViewer(PluginForm):
     self.text = text
     return PluginForm.Show(self, title)
 
-#-------------------------------------------------------------------------------
+
+# -------------------------------------------------------------------------------
 class CHtmlDiff:
   """A replacement for difflib.HtmlDiff that tries to enforce a max width
 
@@ -204,22 +209,22 @@ class CHtmlDiff:
   def make_file(self, lhs, rhs):
     rows = []
     for left, right, changed in difflib._mdiff(lhs, rhs, charjunk=difflib.IS_CHARACTER_JUNK):
-        lno, ltxt = left
-        rno, rtxt = right
-        ltxt = self._stop_wasting_space(ltxt)
-        rtxt = self._stop_wasting_space(rtxt)
-        ltxt = self._trunc(ltxt, changed).replace(" ", "&nbsp;")
-        rtxt = self._trunc(rtxt, changed).replace(" ", "&nbsp;")
-        row = self._row_template % (str(lno), ltxt, str(rno), rtxt)
-        rows.append(row)
+      lno, ltxt = left
+      rno, rtxt = right
+      ltxt = self._stop_wasting_space(ltxt)
+      rtxt = self._stop_wasting_space(rtxt)
+      ltxt = self._trunc(ltxt, changed).replace(" ", "&nbsp;")
+      rtxt = self._trunc(rtxt, changed).replace(" ", "&nbsp;")
+      row = self._row_template % (str(lno), ltxt, str(rno), rtxt)
+      rows.append(row)
 
     all_the_rows = "\n".join(rows)
     all_the_rows = all_the_rows.replace(
-          "\x00+", '<span class="diff_add">').replace(
-          "\x00-", '<span class="diff_sub">').replace(
-          "\x00^", '<span class="diff_chg">').replace(
-          "\x01", '</span>').replace(
-          "\t", 4 * "&nbsp;")
+      "\x00+", '<span class="diff_add">').replace(
+      "\x00-", '<span class="diff_sub">').replace(
+      "\x00^", '<span class="diff_chg">').replace(
+      "\x01", '</span>').replace(
+      "\t", 4 * "&nbsp;")
 
     res = self._html_template % {"style": self._style, "rows": all_the_rows}
     return res
@@ -230,7 +235,7 @@ class CHtmlDiff:
     m = self._rexp_too_much_space.search(s)
     if m:
       mlen = len(m.group(0))
-      return s[:mlen-4] + s[mlen:]
+      return s[:mlen - 4] + s[mlen:]
     else:
       return s
 
@@ -242,7 +247,7 @@ class CHtmlDiff:
     outlen = 0
     push = 0
     for i, ch in enumerate(s):
-      if ch == "\x00": # Followed by an additional byte that should also not count
+      if ch == "\x00":  # Followed by an additional byte that should also not count
         outlen -= 1
         push = True
       elif ch == "\x01":
@@ -258,12 +263,14 @@ class CHtmlDiff:
 
     return res
 
-#-------------------------------------------------------------------------------
+
+# -------------------------------------------------------------------------------
 class CDiffChooser(Choose2):
   def __init__(self, differ, title, matches, importer_obj):
     self.importer = importer_obj
     self.differ = differ
-    columns = [ ["Line", 4], ["Id", 4], ["Source Function", 20], ["Local Address", 14], ["Local Name", 14], ["Ratio", 4], ["ML", 4], ["AVG", 4], ["SR", 4], ["Heuristic", 25], ]
+    columns = [["Line", 4], ["Id", 4], ["Source Function", 20], ["Local Address", 14], ["Local Name", 14], ["Ratio", 4],
+               ["ML", 4], ["AVG", 4], ["SR", 4], ["Heuristic", 25], ]
     if _DEBUG:
       self.columns.append(["FP?", 6])
       self.columns.append(["Reasons", 40])
@@ -279,14 +286,15 @@ class CDiffChooser(Choose2):
     for i, match in enumerate(matches):
       ea, name, heuristic, score, reason, ml, qr = matches[match]
       bin_func_name = GetFunctionName(long(ea))
-      line = ["%03d" % i, "%05d" % match, name, "0x%08x" % long(ea), bin_func_name, str(score), str(ml), str((score + ml)/2), str(qr), heuristic, reason]
+      line = ["%03d" % i, "%05d" % match, name, "0x%08x" % long(ea), bin_func_name, str(score), str(ml),
+              str((score + ml) / 2), str(qr), heuristic, reason]
       if _DEBUG:
         maybe_false_positive = int(seems_false_positive(name, bin_func_name))
         line.append(str(maybe_false_positive))
         line.append(reason)
       self.items.append(line)
 
-    self.items = sorted(self.items, key= lambda x: x[5], reverse=True)
+    self.items = sorted(self.items, key=lambda x: x[5], reverse=True)
 
   def show(self):
     ret = self.Show(False)
@@ -301,7 +309,7 @@ class CDiffChooser(Choose2):
       self.cmd_diff_c = self.AddCommand("Diff pseudo-code")
 
     self.cmd_show_reasons = self.AddCommand("Show match reasons")
-    self.cmd_show_source  = self.AddCommand("Show source code of function")
+    self.cmd_show_source = self.AddCommand("Show source code of function")
     self.cmd_import_all = self.AddCommand("Import all functions")
     self.cmd_import_selected = self.AddCommand("Import selected functions")
 
@@ -347,7 +355,7 @@ class CDiffChooser(Choose2):
   def OnCommand(self, n, cmd_id):
     if cmd_id == self.cmd_show_reasons:
       match = self.items[n]
-      reasons = match[len(match)-1]
+      reasons = match[len(match) - 1]
       msg = "\n".join(reasons)
       info(msg)
     elif cmd_id == self.cmd_show_source:
@@ -368,7 +376,8 @@ class CDiffChooser(Choose2):
         cdiffer.Show(src, title)
       cur.close()
     elif cmd_id == self.cmd_import_all:
-      if askyn_c(0, "HIDECANCEL\nDo you really want to import all matched functions as well as struct, union, enum and typedef definitions?") == 1:
+      if askyn_c(0,
+                 "HIDECANCEL\nDo you really want to import all matched functions as well as struct, union, enum and typedef definitions?") == 1:
         import_items = []
         for item in self.items:
           src_id, src_name, bin_ea = int(item[1]), item[2], int(item[3], 16)
@@ -376,15 +385,17 @@ class CDiffChooser(Choose2):
 
         self.importer.import_items(import_items)
     elif cmd_id == self.cmd_import_selected:
-      if len(self.selected_items) == 1 or askyn_c(1, "HIDECANCEL\nDo you really want to import the selected functions?") == 1:
+      if len(self.selected_items) == 1 or askyn_c(1,
+                                                  "HIDECANCEL\nDo you really want to import the selected functions?") == 1:
         import_items = []
         for index in self.selected_items:
           item = self.items[index]
           src_id, src_name, bin_ea = int(item[1]), item[2], int(item[3], 16)
           import_items.append([src_id, src_name, bin_ea])
 
-        import_definitions = askyn_c(0, "HIDECANCEL\nDo you also want to import all struct, union, enum and typedef definitions?") == 1
-        self.importer.import_items(import_items, import_definitions = import_definitions)
+        import_definitions = askyn_c(0,
+                                     "HIDECANCEL\nDo you also want to import all struct, union, enum and typedef definitions?") == 1
+        self.importer.import_items(import_items, import_definitions=import_definitions)
     elif cmd_id == self.cmd_diff_c:
       html_diff = CHtmlDiff()
       item = self.items[n]
@@ -416,7 +427,8 @@ class CDiffChooser(Choose2):
       cdiffer = CHtmlViewer()
       cdiffer.Show(src, title)
 
-#-------------------------------------------------------------------------------
+
+# -------------------------------------------------------------------------------
 class CIDABinaryToSourceImporter(CBinaryToSourceImporter):
   def __init__(self, project_script):
     self.hooks = None
@@ -451,7 +463,8 @@ class CIDABinaryToSourceImporter(CBinaryToSourceImporter):
 
     hooks = module.HOOKS
     if 'PigaiosHooks' not in hooks:
-      log("Error: The project specific script exports the HOOK dictionary but it doesn't contain a 'PigaiosHooks' entry.")
+      log(
+        "Error: The project specific script exports the HOOK dictionary but it doesn't contain a 'PigaiosHooks' entry.")
       return False
 
     hook_class = hooks["PigaiosHooks"]
@@ -470,7 +483,7 @@ class CIDABinaryToSourceImporter(CBinaryToSourceImporter):
         version = row[0]
         status = row[1]
         if version != VERSION_VALUE:
-          msg  = "HIDECANCEL\nDatabase version (%s) is different to current version (%s).\n"
+          msg = "HIDECANCEL\nDatabase version (%s) is different to current version (%s).\n"
           msg += "Do you want to re-create the database?"
           msg += "\n\nNOTE: Selecting 'NO' will try to use the non updated database."
           ret = askyn_c(0, msg % (version, VERSION_VALUE)) == 1
@@ -580,7 +593,7 @@ class CIDABinaryToSourceImporter(CBinaryToSourceImporter):
 
     if self.find_initial_rows():
       self.find_callgraph_matches()
-      self.choose_best_matches(is_final = True)
+      self.choose_best_matches(is_final=True)
       if len(self.best_matches) > 0:
         matches = True
 
@@ -614,7 +627,8 @@ class CIDABinaryToSourceImporter(CBinaryToSourceImporter):
         if proto is not None:
           SetType(bin_ea, "%s;" % proto)
 
-#-------------------------------------------------------------------------------
+
+# -------------------------------------------------------------------------------
 def main():
   global indent_cmd
 
@@ -639,7 +653,7 @@ def main():
     indent_cmd = list(lexer)
 
     project_script = x.iProjectSpecificRules.value
-    importer = CIDABinaryToSourceImporter(project_script = project_script)
+    importer = CIDABinaryToSourceImporter(project_script=project_script)
     importer.hooks = None
     importer.min_level = min_level
     importer.min_display_level = min_display_level
@@ -648,11 +662,13 @@ def main():
   finally:
     hide_wait_box()
 
+
 if __name__ == "__main__":
   try:
     try:
       if os.getenv("DIAPHORA_PROFILE") is not None:
         import cProfile
+
         profiler = cProfile.Profile()
         profiler.runcall(main)
         exported = True
