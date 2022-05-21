@@ -2,3 +2,4 @@
 pygments*
 python
 .idea
+.gitignore
